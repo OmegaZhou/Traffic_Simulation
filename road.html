@@ -1,0 +1,100 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<style>
+			#road {
+				border-style:solid;
+			}
+		</style>
+		<script type="text/javascript">
+			var canvas_h=600;
+			var canvas_w=1000;
+			
+			//This are light information;
+			var light_r=30;
+			var light_x=new Array();
+			light_x[0]=200;
+			light_x[1]=200;
+			var light_y=new Array();
+			light_y[0]=50;
+			light_y[1]=150;
+			var light_color=new Array();
+			light_color[0]="red";
+			light_color[1]="lime";
+			var light_name=new Array();
+			light_name[0]="南北方向";
+			light_name[1]="东西方向";
+			
+			function swapLightColor()
+			{
+				var temp=light_color[0];
+				light_color[0]=light_color[1];
+				light_color[1]=temp;
+			}
+			
+			function drawLight()
+			{
+				var road=getCanvas();
+				var temp=road.fillStyle;
+				for(var i=0;i<2;++i){
+					road.beginPath();
+					road.arc(light_x[i],light_y[i],light_r,0,2*Math.PI,true);
+					road.stroke();
+					road.fillStyle=light_color[i];
+					road.fill();
+					road.closePath();
+				}
+				road.fillStyle=temp;
+			}
+			
+			function getCanvas()
+			{
+				var road=document.getElementById("road").getContext("2d");
+				return road;
+			}
+			
+			
+			function init()
+			{
+				var road=document.getElementById("road");
+				road.setAttribute("height",canvas_h);
+				road.setAttribute("width",canvas_w);
+				road=getCanvas();
+				road.font="35px Georgia";
+				for(var i=0;i<2;++i){
+					road.fillText(light_name[i],light_x[i]-6*light_r,light_y[i]+light_r/3);
+					road.strokeRect(light_x[i]-light_r,light_y[i]-light_r,2*light_r,2*light_r);
+				}
+				drawLight();
+			}
+			
+			
+			function update()
+			{
+				swapLightColor();
+				drawLight();
+			}
+			
+			var interval;
+			function start()
+			{
+				interval=setInterval(update,1000);
+			}
+		</script>
+	</head>
+	
+	<body>
+		<div style="text-align:center">
+			<canvas id="road">
+				
+			</canvas>
+		</div>
+		
+		<script type="text/javascript">
+			init();
+			start();
+		</script>
+	</body>
+	
+</html>
