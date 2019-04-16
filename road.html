@@ -11,41 +11,203 @@
 			var canvas_h=600;
 			var canvas_w=1000;
 			
-			//This are light information;
-			var light_r=30;
-			var light_x=new Array();
-			light_x[0]=200;
-			light_x[1]=200;
-			var light_y=new Array();
-			light_y[0]=50;
-			light_y[1]=150;
-			var light_color=new Array();
-			light_color[0]="red";
-			light_color[1]="lime";
-			var light_name=new Array();
-			light_name[0]="南北方向";
-			light_name[1]="东西方向";
+			
+			var light=new Array();
+			var light_flag= new Array();
+			light[0]=new _light();
+			light[1]=new _light();
+			
+			var car_l=60;
+			var car_w=30;
+			
+			var west=0;
+			var east=1;
+			var north=2;
+			var south=3;
+			
+			
+			var start_point=new Array();
+			var end_point=new Array();
+			var center_start = new Array();
+			var center_end = new Array();
+			
+			var dir=new Array();
+			
+			var extra_car_queue= new Array();
+			var car_queue=new Array();
+			var start_mark= new Array();
+			var center_mark=new Array();
+			var vel=new Array();
+			vel[0]=5;
+			vel[1]=10;
+			vel[2]=10;
+			vel[3]=10;
+			function initPoint(){
+				start_point[west]=new _point();
+				start_point[west].x=230;
+				start_point[west].y=30+4*car_l+car_l/2;
+			
+				start_point[east]=new _point();
+				start_point[east].x=230+8*car_l;
+				start_point[east].y=30+4*car_l;
+			
+				start_point[north]=new _point();
+				start_point[north].x=230+4*car_l;
+				start_point[north].y=30;
+			
+				start_point[south]=new _point();
+				start_point[south].x=230+4*car_l+car_l/2;
+				start_point[south].y=30+8*car_l;
+				
+				dir[west]=new _point();
+				dir[west].x=1;
+				dir[west].y=0;
+				
+				dir[east]=new _point();
+				dir[east].x=-1;
+				dir[east].y=0;
+				
+				dir[south]=new _point();
+				dir[south].x=0;
+				dir[south].y=-1;
+				
+				dir[north]=new _point();
+				dir[north].x=0;
+				dir[north].y=1;
+				
+				for(var i=0;i<4;++i){
+					extra_car_queue[i]= new _queue();
+					car_queue[i]=new _queue();
+					start_mark[i]=0;
+					center_mark[i]=0;
+				}
+				for(var i=0;i<4;++i){
+					center_start[i]= new _point();
+					center_start[i].x=start_point[i].x+dir[i].x*4*car_l;
+					center_start[i].y=start_point[i].y+dir[i].y*4*car_l;
+					
+					center_end[i]= new _point();
+					center_end[i].x=start_point[i].x+dir[i].x*5*car_l;
+					center_end[i].y=start_point[i].y+dir[i].y*5*car_l;
+					
+					end_point[i]= new _point();
+					end_point[i].x=start_point[i].x+9*car_l*dir[i].x
+					end_point[i].y=start_point[i].y+9*car_l*dir[i].y
+				}
+			}
+			
+			
+			var car_img = new Array();
+			for(var i=0;i<4;++i){
+				car_img[i]=new Array();
+				for(var j=0;j<4;++j){
+					car_img[i][j]=new Image();
+				}
+				car_img[i][0]="car"+i.toString()+".jpg"
+			}
+			var car_size=20;
+			
+			function _queue()
+			{
+				this.queue=new Array();
+				this.rear=0;
+				this.front=0;
+				this.size=5;
+			}
+			function _light()
+			{	
+				this.x;
+				this.y;
+				this.r;
+				this.color;
+				this.name;
+			}
+			
+			function _car()
+			{
+				this.v;
+				this.img=new Image();
+				this.type;
+				this.location=new _point();
+			}
+			
+			function _point()
+			{
+				this.x;
+				this.y;
+			}
+			
+			function createCar(location,type)
+			{
+				if(start_mark[location]==1){
+					return false;
+				}else{
+					var new_car=new _car();
+					new_car.img.src=car_img[location][type];
+					new_car.v=vel[type];
+					new_car.location.x=start_point[location].x;
+					new_car.location.y=start_point[location].y;
+					if(type==0){
+						if((car_queue[location].rear+1)%car_queue[location].size!=car_queue[location].front){
+							car_queue[location].queue[car_queue[location].rear]=new_car;
+							car_queue[location].rear=(car_queue[location].rear+1)%car_queue[location].size;
+							return true;
+						}
+					}else{
+						if((extra_car_queue[location].rear+1)%extra_car_queue[location].size!=extra_car_queue[location].front){
+							extra_car_queue[location].queue[extra_car_queue[location].rear]=new_car;
+							extra_car_queue[location].rear=(extra_car_queue[location].rear+1)%extra_car_queue[location].size;
+							return true;
+						}
+					}
+				}
+				return false;
+			}
 			
 			function swapLightColor()
 			{
-				var temp=light_color[0];
-				light_color[0]=light_color[1];
-				light_color[1]=temp;
+				var temp=light[0].color;
+				light[0].color=light[1].color;
+				light[1].color=temp;
+				if(light[0].color=="red"){
+					light_flag[north]=0;
+					light_flag[south]=0;
+					light_flag[west]=1;
+					light_flag[east]=1;
+				}else{
+					light_flag[north]=1;
+					light_flag[south]=1;
+					light_flag[west]=0;
+					light_flag[east]=0;
+				}
 			}
+			
+			function clear()
+			{
+				var road=getCanvas();
+				road.clearRect(0,0,canvas_w,canvas_h);
+			}	
 			
 			function drawLight()
 			{
 				var road=getCanvas();
 				var temp=road.fillStyle;
 				for(var i=0;i<2;++i){
+					//Draw name
+					road.fillText(light[i].name,light[i].x-6*light[i].r,light[i].y+light[i].r/3);
+					
+					//Draw border
+					road.strokeRect(light[i].x-light[i].r,light[i].y-light[i].r,2*light[i].r,2*light[i].r);
+					
 					road.beginPath();
-					road.arc(light_x[i],light_y[i],light_r,0,2*Math.PI,true);
+					road.arc(light[i].x,light[i].y,light[i].r,0,2*Math.PI,true);
 					road.stroke();
-					road.fillStyle=light_color[i];
+					road.fillStyle=light[i].color;
 					road.fill();
 					road.closePath();
+					road.fillStyle=temp;
 				}
-				road.fillStyle=temp;
+				
 			}
 			
 			function getCanvas()
@@ -54,32 +216,249 @@
 				return road;
 			}
 			
+			function drawRoad()
+			{
+				var road=getCanvas();
+				var x;
+				var y;
+				
+				// Draw west road
+				x=start_point[west].x;
+				y=start_point[west].y-car_l/2;
+				road.beginPath();
+				road.moveTo(x,y);
+				road.lineTo(x+4*car_l,y);
+				road.stroke();
+				road.closePath();
+				
+				road.beginPath();
+				road.setLineDash([5]);
+				road.moveTo(x,y+car_w);
+				road.lineTo(x+4*car_l,y+car_w);
+				road.stroke();
+				road.closePath();
+				road.setLineDash([0]);
+				
+				road.beginPath();
+				road.moveTo(x,y+2*car_w);
+				road.lineTo(x+4*car_l,y+2*car_w);
+				road.stroke();
+				road.closePath();
+				
+				//Draw east road
+				x=start_point[east].x-3*car_l;
+				y=start_point[east].y;
+				road.beginPath();
+				road.moveTo(x,y);
+				road.lineTo(x+4*car_l,y);
+				road.stroke();
+				road.closePath();
+				
+				road.beginPath();
+				road.setLineDash([5]);
+				road.moveTo(x,y+car_w);
+				road.lineTo(x+4*car_l,y+car_w);
+				road.stroke();
+				road.closePath();
+				road.setLineDash([0]);
+				
+				road.beginPath();
+				road.moveTo(x,y+2*car_w);
+				road.lineTo(x+4*car_l,y+2*car_w);
+				road.stroke();
+				road.closePath();
+				
+				//Draw north road
+				x=start_point[north].x;;
+				y=start_point[north].y;
+				road.beginPath();
+				road.moveTo(x,y);
+				road.lineTo(x,y+4*car_l);
+				road.stroke();
+				road.closePath();
+				
+				road.beginPath();
+				road.setLineDash([5]);
+				road.moveTo(x+car_w,y);
+				road.lineTo(x+car_w,y+4*car_l);
+				road.stroke();
+				road.closePath();
+				road.setLineDash([0]);
+				
+				road.beginPath();
+				road.moveTo(x+2*car_w,y);
+				road.lineTo(x+2*car_w,y+4*car_l);
+				road.stroke();
+				road.closePath();
+				
+				//Draw south road;
+				x=start_point[south].x-car_l/2;
+				y=start_point[south].y-3*car_l;
+				road.beginPath();
+				road.moveTo(x,y);
+				road.lineTo(x,y+4*car_l);
+				road.stroke();
+				road.closePath();
+				
+				road.beginPath();
+				road.setLineDash([5]);
+				road.moveTo(x+car_w,y);
+				road.lineTo(x+car_w,y+4*car_l);
+				road.stroke();
+				road.closePath();
+				road.setLineDash([0]);
+				
+				road.beginPath();
+				road.moveTo(x+2*car_w,y);
+				road.lineTo(x+2*car_w,y+4*car_l);
+				road.stroke();
+				road.closePath();
+				
+			}
+			
+			function drawCar(img,x,y)
+			{
+				var road=getCanvas();
+				for(var i=0;i<4;++i){
+					for(var j=car_queue[i].front;j<car_queue[i].rear;++j){
+						var w,l;
+						if(i==0||i==1){
+							w=car_l;
+							l=car_w
+						}else{
+							w=car_w;
+							l=car_l;
+						}
+						road.drawImage(car_queue[i].queue[j].img,car_queue[i].queue[j].location.x,car_queue[i].queue[j].location.y,w,l);
+					}
+				}
+				for(var i=0;i<4;++i){
+					for(var j=extra_car_queue[i].front;j<extra_car_queue[i].rear;++j){
+						var w,l;
+						if(i==0||i==1){
+							w=car_l;
+							l=car_w
+						}else{
+							w=car_w;
+							l=car_l;
+						}
+						road.drawImage(extra_car_queue[i].queue[j].img,extra_car_queue[i].queue[j].location.x,extra_car_queue[i].queue[j].location.y,w,l);
+					}
+				}
+			}
+			
+			function checkMove(i,index)
+			{
+				var point= new _point();
+				point=car_queue[i].queue[index].location;
+				if(i==south || i==east){
+					if(light_flag[i]==1 || (point.x+dir[i].x*car_l>=center_start[i].x && point.y+dir[i].y*car_l>=center_start[i].y) || 
+					(point.x+dir[i].x*car_l<=center_end[i].x && point.y+dir[i].y*car_l<=center_end[i].y)){
+						return true;
+					}else{
+						return false;
+					}
+				}else {
+					if(light_flag[i]==1 || (point.x+dir[i].x*car_l<=center_start[i].x && point.y+dir[i].y*car_l<=center_start[i].y) || 
+					(point.x+dir[i].x*car_l>=center_end[i].x && point.y+dir[i].y*car_l>=center_end[i].y)){
+						return true;
+					}else{
+						return false;
+					}
+				}
+			}
+			
+			function checkEnd(i,index)
+			{
+				var point= new _point();
+				point=car_queue[i].queue[index].location;
+				if(i==south || i==east){
+					if(point.x<=end_point[i].x && point.y<=end_point[i].y)
+					{
+						return true;
+					}else{
+						return false;
+					}
+				}else {
+					if(point.x>=end_point[i].x && point.y>=end_point[i].y)
+					{
+						return true;
+					}else{
+						return false;
+					}
+				}
+			}
+			
+			function move()
+			{
+				for(var i=0;i<4;++i){
+					for(var j=car_queue[i].front;j<car_queue[i].rear;++j){
+						if(checkEnd(i,j)){
+							++car_queue[i].front;
+						}else {
+							if(checkMove(i,j)){
+								car_queue[i].queue[j].location.x+=vel[0]*dir[i].x;
+								car_queue[i].queue[j].location.y+=vel[0]*dir[i].y;
+							}
+						}
+					}
+				}
+			}
 			
 			function init()
 			{
+				//These are light information;
+				light[0].r=30;
+				light[0].x=200;
+				light[0].y=50;
+				light[0].color="red";
+				light[0].name="南北方向";
+				
+				light_flag[north]=0;
+				light_flag[south]=0;
+				light_flag[west]=1;
+				light_flag[east]=1;
+				
+				light[1].r=30;
+				light[1].x=200;
+				light[1].y=150;
+				light[1].color="lime";
+				light[1].name="东西方向";
+				
+				initPoint();
+				
 				var road=document.getElementById("road");
 				road.setAttribute("height",canvas_h);
 				road.setAttribute("width",canvas_w);
 				road=getCanvas();
 				road.font="35px Georgia";
-				for(var i=0;i<2;++i){
-					road.fillText(light_name[i],light_x[i]-6*light_r,light_y[i]+light_r/3);
-					road.strokeRect(light_x[i]-light_r,light_y[i]-light_r,2*light_r,2*light_r);
-				}
+				
+				
+				
+				clear();
 				drawLight();
+				drawRoad();
 			}
 			
 			
+			var t=0;
 			function update()
 			{
-				swapLightColor();
+				clear();
+				t=(t+1)%80;
+				if(t==0){
+					swapLightColor();
+				}
+				move();
 				drawLight();
+				drawRoad();
+				drawCar();
 			}
 			
 			var interval;
 			function start()
 			{
-				interval=setInterval(update,1000);
+				interval=setInterval(update,100);
 			}
 		</script>
 	</head>
@@ -93,6 +472,10 @@
 		
 		<script type="text/javascript">
 			init();
+			createCar(south,0);
+			createCar(north,0);
+			createCar(east,0);
+			createCar(west,0);
 			start();
 		</script>
 	</body>
