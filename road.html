@@ -40,8 +40,40 @@
 			var vel=new Array();
 			vel[0]=5;
 			vel[1]=10;
-			vel[2]=10;
-			vel[3]=10;
+			vel[2]=15;
+			vel[3]=20;
+			
+			function _queue()
+			{
+				this.queue=new Array();
+				this.rear=0;
+				this.front=0;
+				this.size=10;
+			}
+			function _light()
+			{	
+				this.x;
+				this.y;
+				this.r;
+				this.color;
+				this.name;
+			}
+			
+			function _car()
+			{
+				this.v;
+				this.img=new Image();
+				this.type;
+				this.location=new _point();
+			}
+			
+			function _point()
+			{
+				this.x;
+				this.y;
+			}
+			
+			
 			function initPoint(){
 				start_point[west]=new _point();
 				start_point[west].x=230;
@@ -103,70 +135,20 @@
 				for(var j=0;j<4;++j){
 					car_img[i][j]=new Image();
 				}
-				car_img[i][0]="car"+i.toString()+".jpg"
+				car_img[i][0]="car"+i.toString()+".jpg";
+				car_img[i][1]="police"+i.toString()+".jpg";
+				car_img[i][2]="fire"+i.toString()+".jpg";
+				car_img[i][3]="ambulance"+i.toString()+".png";
 			}
 			var car_size=20;
 			
-			function _queue()
-			{
-				this.queue=new Array();
-				this.rear=0;
-				this.front=0;
-				this.size=5;
-			}
-			function _light()
-			{	
-				this.x;
-				this.y;
-				this.r;
-				this.color;
-				this.name;
-			}
 			
-			function _car()
-			{
-				this.v;
-				this.img=new Image();
-				this.type;
-				this.location=new _point();
-			}
 			
-			function _point()
+			function clear()
 			{
-				this.x;
-				this.y;
-			}
-			
-			function createCar(location,type)
-			{
-				if(start_mark[location]==1){
-					return false;
-				}else{
-					var new_car=new _car();
-					new_car.img.src=car_img[location][type];
-					new_car.v=vel[type];
-					new_car.location.x=start_point[location].x;
-					new_car.location.y=start_point[location].y;
-					if(type==0){
-						if((car_queue[location].rear+1)%car_queue[location].size!=car_queue[location].front){
-							car_queue[location].queue[car_queue[location].rear]=new _car();
-							car_queue[location].queue[car_queue[location].rear]= new_car;
-							car_queue[location].rear=(car_queue[location].rear+1)%car_queue[location].size;
-							start_mark[location]=1;
-							return true;
-						}
-					}else{
-						if((extra_car_queue[location].rear+1)%extra_car_queue[location].size!=extra_car_queue[location].front){
-							extra_car_queue[location].queue[extra_car_queue[location].rear]=new _car();
-							extra_car_queue[location].queue[extra_car_queue[location].rear]=new_car;
-							extra_car_queue[location].rear=(extra_car_queue[location].rear+1)%extra_car_queue[location].size;
-							start_mark[location]=1;
-							return true;
-						}
-					}
-				}
-				return false;
-			}
+				var road=getCanvas();
+				road.clearRect(0,0,canvas_w,canvas_h);
+			}	
 			
 			function swapLightColor()
 			{
@@ -186,11 +168,6 @@
 				}
 			}
 			
-			function clear()
-			{
-				var road=getCanvas();
-				road.clearRect(0,0,canvas_w,canvas_h);
-			}	
 			
 			function drawLight()
 			{
@@ -320,6 +297,37 @@
 				
 			}
 			
+			function createCar(location,type)
+			{
+				if(start_mark[location]==1){
+					return false;
+				}else{
+					var new_car=new _car();
+					new_car.img.src=car_img[location][type];
+					new_car.v=vel[type];
+					new_car.location.x=start_point[location].x;
+					new_car.location.y=start_point[location].y;
+					if(type==0){
+						if((car_queue[location].rear+1)%car_queue[location].size!=car_queue[location].front){
+							car_queue[location].queue[car_queue[location].rear]=new _car();
+							car_queue[location].queue[car_queue[location].rear]= new_car;
+							car_queue[location].rear=(car_queue[location].rear+1)%car_queue[location].size;
+							start_mark[location]=1;
+							return true;
+						}
+					}else{
+						if((extra_car_queue[location].rear+1)%extra_car_queue[location].size!=extra_car_queue[location].front){
+							extra_car_queue[location].queue[extra_car_queue[location].rear]=new _car();
+							extra_car_queue[location].queue[extra_car_queue[location].rear]=new_car;
+							extra_car_queue[location].rear=(extra_car_queue[location].rear+1)%extra_car_queue[location].size;
+							start_mark[location]=1;
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+			
 			function drawCar(img,x,y)
 			{
 				var road=getCanvas();
@@ -340,7 +348,10 @@
 					}
 				}
 				for(var i=0;i<4;++i){
-					for(var j=extra_car_queue[i].front;j<extra_car_queue[i].rear;++j){
+					var front=extra_car_queue[i].front;
+					var rear=extra_car_queue[i].rear;
+					var size=extra_car_queue[i].size;
+					for(var j=front;j!=rear;j=(j+1)%size){
 						var w,l;
 						if(i==0||i==1){
 							w=car_l;
@@ -374,12 +385,14 @@
 				
 			}
 			
-			function checkEnd(i,index)
+			function checkExtraMove()
 			{
-				var point= new _point();
-				point=car_queue[i].queue[index].location;
-				
-				if((point.x-end_point[i].x)*dir[i].x>=0 && (point.y-end_point[i].y)*dir[i].y>=0)
+				return true;
+			}
+			
+			function checkEnd(i,x,y)
+			{
+				if((x-end_point[i].x)*dir[i].x>=0 && (y-end_point[i].y)*dir[i].y>=0)
 				{
 					return true;
 				}else{
@@ -399,18 +412,37 @@
 			}
 			function move()
 			{
+			
+				for(var i=0;i<4;++i){
+					var front=extra_car_queue[i].front;
+					var rear=extra_car_queue[i].rear;
+					var size=extra_car_queue[i].size;
+					for(var j=front;j!=rear;j=(j+1)%size){
+						if(checkEnd(i,extra_car_queue[i].queue[j].location.x,extra_car_queue[i].queue[j].location.y)){
+							++extra_car_queue[i].front;
+							extra_car_queue[i].front%=extra_car_queue[i].size;
+						}else {
+							var car_v=extra_car_queue[i].queue[j].v;
+							if(checkExtraMove(i,j)){
+								extra_car_queue[i].queue[j].location.x+=car_v*dir[i].x;
+								extra_car_queue[i].queue[j].location.y+=car_v*dir[i].y;
+							}
+						}
+					}
+				}
 				for(var i=0;i<4;++i){
 					var front=car_queue[i].front;
 					var rear=car_queue[i].rear;
 					var size=car_queue[i].size;
 					for(var j=front;j!=rear;j=(j+1)%size){
-						if(checkEnd(i,j)){
+						if(checkEnd(i,car_queue[i].queue[j].location.x,car_queue[i].queue[j].location.y)){
 							++car_queue[i].front;
 							car_queue[i].front%=car_queue[i].size;
 						}else {
+							var car_v=car_queue[i].queue[j].v;
 							if(checkMove(i,j)){
-								car_queue[i].queue[j].location.x+=vel[0]*dir[i].x;
-								car_queue[i].queue[j].location.y+=vel[0]*dir[i].y;
+								car_queue[i].queue[j].location.x+=car_v*dir[i].x;
+								car_queue[i].queue[j].location.y+=car_v*dir[i].y;
 							}
 						}
 					}
@@ -427,12 +459,22 @@
 						}
 					}
 					
-					--temp;
+					if(extra_car_queue[i].rear==extra_car_queue[i].front){
+						--temp;
+					}else {
+						var index= (extra_car_queue[i].rear-1+extra_car_queue[i].size)%extra_car_queue[i].size;
+						if(checkLeaveStart(i,extra_car_queue[i].queue[index].location.x,extra_car_queue[i].queue[index].location.y)){
+							--temp;
+						}
+					}
 					if(temp==0){
 						start_mark[i]=0;
 					}
 				}
 			}
+			
+			
+			
 			
 			function init()
 			{
@@ -488,14 +530,46 @@
 			function start()
 			{
 				interval=setInterval(update,100);
+				var my_button=document.getElementById("control");
+				my_button.innerHTML="暂停模拟";
+				my_button.setAttribute("onclick","pause()");
 			}
 			
-			function northCreateNormalCar()
+			function pause()
 			{
-				createCar(south,0);
-				createCar(north,0);
-				createCar(east,0);
-				createCar(west,0);
+				clearInterval(interval);
+				var my_button=document.getElementById("control");
+				my_button.innerHTML="开始模拟";
+				my_button.setAttribute("onclick","start()");
+			}
+			var start_dir=3
+			
+			function createNormalCar()
+			{
+				for(var i=0;i<4;++i){
+					start_dir=(start_dir+1)%4;
+					if(createCar(start_dir,0)){
+						return true;
+					}
+				}
+				return false;
+			}
+			
+			var extra_type=1;
+			
+			function createExtraCar()
+			{
+				for(var i=0;i<4;++i){
+					start_dir=(start_dir+1)%4;
+					if(createCar(start_dir,extra_type)){
+						extra_type++;
+						if(extra_type==4){
+							extra_type=1;
+						}
+						return true;
+					}
+				}
+				return false;
 			}
 		</script>
 	</head>
@@ -506,18 +580,19 @@
 				
 			</canvas>
 			
-			<button onclick="northCreateNormalCar()"> 
-			Add
-			</button>
+		</div>
+		<div style="text-align:center;">
+			<button onclick="createNormalCar()">添加普通车辆</button>
+			<button id="control" onclick="start()">开始模拟</button>
+			<button onclick="createExtraCar()">添加特殊车辆</button>
 		</div>
 		
 		<script type="text/javascript">
 			init();
+			createCar(east,3);
+			createCar(west,2);
 			createCar(south,0);
-			createCar(north,0);
-			createCar(east,0);
-			createCar(west,0);
-			start();
+			createCar(north,1);
 		</script>
 	</body>
 	
