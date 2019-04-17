@@ -149,14 +149,18 @@
 					new_car.location.y=start_point[location].y;
 					if(type==0){
 						if((car_queue[location].rear+1)%car_queue[location].size!=car_queue[location].front){
-							car_queue[location].queue[car_queue[location].rear]=new_car;
+							car_queue[location].queue[car_queue[location].rear]=new _car();
+							car_queue[location].queue[car_queue[location].rear]= new_car;
 							car_queue[location].rear=(car_queue[location].rear+1)%car_queue[location].size;
+							start_mark[location]=1;
 							return true;
 						}
 					}else{
 						if((extra_car_queue[location].rear+1)%extra_car_queue[location].size!=extra_car_queue[location].front){
+							extra_car_queue[location].queue[extra_car_queue[location].rear]=new _car();
 							extra_car_queue[location].queue[extra_car_queue[location].rear]=new_car;
 							extra_car_queue[location].rear=(extra_car_queue[location].rear+1)%extra_car_queue[location].size;
+							start_mark[location]=1;
 							return true;
 						}
 					}
@@ -320,7 +324,10 @@
 			{
 				var road=getCanvas();
 				for(var i=0;i<4;++i){
-					for(var j=car_queue[i].front;j<car_queue[i].rear;++j){
+					var front=car_queue[i].front;
+					var rear=car_queue[i].rear;
+					var size=car_queue[i].size;
+					for(var j=front;j!=rear;j=(j+1)%size){
 						var w,l;
 						if(i==0||i==1){
 							w=car_l;
@@ -351,56 +358,78 @@
 			{
 				var point= new _point();
 				point=car_queue[i].queue[index].location;
-				if(i==south || i==east){
-					if(light_flag[i]==1 || (point.x+dir[i].x*car_l>=center_start[i].x && point.y+dir[i].y*car_l>=center_start[i].y) || 
-					(point.x+dir[i].x*car_l<=center_end[i].x && point.y+dir[i].y*car_l<=center_end[i].y)){
-						return true;
-					}else{
-						return false;
-					}
-				}else {
-					if(light_flag[i]==1 || (point.x+dir[i].x*car_l<=center_start[i].x && point.y+dir[i].y*car_l<=center_start[i].y) || 
-					(point.x+dir[i].x*car_l>=center_end[i].x && point.y+dir[i].y*car_l>=center_end[i].y)){
-						return true;
-					}else{
+				if(index!=car_queue[i].front){
+					var before_car=car_queue[i].queue[(index-1+car_queue[i].size)%car_queue[i].size].location;
+					if((point.x+dir[i].x*vel[i]+car_l*dir[i].x-before_car.x)*dir[i].x>=0 && (point.y+dir[i].y*vel[i]+car_l*dir[i].y-before_car.y)*dir[i].y>=0){
 						return false;
 					}
 				}
+				
+				if(light_flag[i]==1 || ((point.x+dir[i].x*car_l-center_start[i].x)*dir[i].x<=0 && (point.y+dir[i].y*car_l-center_start[i].y)*dir[i].y<=0) || 
+				((point.x+dir[i].x*car_l-center_end[i].x)*dir[i].x>=0 && (point.y+dir[i].y*car_l-center_end[i].y)*dir[i].y>=0)){
+					return true;
+				}else{
+					return false;
+				}
+				
 			}
 			
 			function checkEnd(i,index)
 			{
 				var point= new _point();
 				point=car_queue[i].queue[index].location;
-				if(i==south || i==east){
-					if(point.x<=end_point[i].x && point.y<=end_point[i].y)
-					{
-						return true;
-					}else{
-						return false;
-					}
-				}else {
-					if(point.x>=end_point[i].x && point.y>=end_point[i].y)
-					{
-						return true;
-					}else{
-						return false;
-					}
+				
+				if((point.x-end_point[i].x)*dir[i].x>=0 && (point.y-end_point[i].y)*dir[i].y>=0)
+				{
+					return true;
+				}else{
+					return false;
 				}
+				
 			}
 			
+			function checkLeaveStart(direction,x,y)
+			{
+				if((x-start_point[direction].x)*dir[direction].x>=car_l*dir[direction].x*dir[direction].x 
+				&& (y-start_point[direction].y)*dir[direction].y>=car_l*dir[direction].y*dir[direction].y){
+					return true;
+				}else {
+					return false;
+				}
+			}
 			function move()
 			{
 				for(var i=0;i<4;++i){
-					for(var j=car_queue[i].front;j<car_queue[i].rear;++j){
+					var front=car_queue[i].front;
+					var rear=car_queue[i].rear;
+					var size=car_queue[i].size;
+					for(var j=front;j!=rear;j=(j+1)%size){
 						if(checkEnd(i,j)){
 							++car_queue[i].front;
+							car_queue[i].front%=car_queue[i].size;
 						}else {
 							if(checkMove(i,j)){
 								car_queue[i].queue[j].location.x+=vel[0]*dir[i].x;
 								car_queue[i].queue[j].location.y+=vel[0]*dir[i].y;
 							}
 						}
+					}
+				}
+				
+				for(var i=0;i<4;++i){
+					var temp=2;
+					if(car_queue[i].rear==car_queue[i].front){
+						--temp;
+					}else {
+						var index= (car_queue[i].rear-1+car_queue[i].size)%car_queue[i].size;
+						if(checkLeaveStart(i,car_queue[i].queue[index].location.x,car_queue[i].queue[index].location.y)){
+							--temp;
+						}
+					}
+					
+					--temp;
+					if(temp==0){
+						start_mark[i]=0;
 					}
 				}
 			}
@@ -460,6 +489,14 @@
 			{
 				interval=setInterval(update,100);
 			}
+			
+			function northCreateNormalCar()
+			{
+				createCar(south,0);
+				createCar(north,0);
+				createCar(east,0);
+				createCar(west,0);
+			}
 		</script>
 	</head>
 	
@@ -468,6 +505,10 @@
 			<canvas id="road">
 				
 			</canvas>
+			
+			<button onclick="northCreateNormalCar()"> 
+			Add
+			</button>
 		</div>
 		
 		<script type="text/javascript">
